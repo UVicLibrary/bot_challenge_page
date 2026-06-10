@@ -74,6 +74,7 @@ describe "Turnstile bot limiting", type: :system do
     let(:cf_turnstile_secret_key) { cf_turnstile_secret_key_fail }
 
     before do
+      BotChallengePage::BotChallengePageController.bot_challenge_config.challenge_logger = Rails.logger
       allow(Rails.logger).to receive(:warn)
       stub_turnstile_failure(request_body: {
         "secret"=>BotChallengePage::BotChallengePageController.bot_challenge_config.cf_turnstile_secret_key,

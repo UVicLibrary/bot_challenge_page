@@ -35,44 +35,81 @@ module BotChallengePage
     end
 
     def verify_challenge
-      body = {
-        secret: self.bot_challenge_config.cf_turnstile_secret_key,
-        response: params["cf_turnstile_response"],
-        remoteip: request.remote_ip,
-      }
-
-      http = HTTP.timeout(self.bot_challenge_config.cf_timeout)
-      response = http.post(self.bot_challenge_config.cf_turnstile_validation_url,
-        json: body)
-
-      result = response.parse
-      # {"success"=>true, "error-codes"=>[], "challenge_ts"=>"2025-01-06T17:44:28.544Z", "hostname"=>"example.com", "metadata"=>{"result_with_testing_key"=>true}}
-      # {"success"=>false, "error-codes"=>["invalid-input-response"], "messages"=>[], "metadata"=>{"result_with_testing_key"=>true}}
-
-      if result["success"]
-        # mark it as succesful in session, and record time. They do need a session/cookies
-        # to get through the challenge.
-        Rails.logger.info("#{self.class.name}: Cloudflare Turnstile validation passed api (#{request.remote_ip}, #{request.user_agent}): #{params["dest"]}")
-        session[self.bot_challenge_config.session_passed_key] = {
-          SESSION_DATETIME_KEY => Time.now.utc.iso8601,
-          SESSION_FINGERPRINT_KEY   => self.bot_challenge_config.session_valid_fingerprint.call(request)
-        }
+      @result = verify_cloudflare
+      if @result['success']
+        after_challenge_success(@result)
       else
-        Rails.logger.warn("#{self.class.name}: Cloudflare Turnstile validation failed (#{request.remote_ip}, #{request.user_agent}): #{result}: #{params["dest"]}")
+        after_challenge_failure(@result)
       end
+    end
 
+    private
+
+    # This only runs for a successful page/JSON challenge (NOT a form!)
+    def after_challenge_success(result)
+      attach_session_cookie
       # add config needed by JS to result
       result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
-
       # and let's just return the whole thing to client? Is there anything confidential there?
       render json: result
-    rescue HTTP::Error, JSON::ParserError => e
-      # probably an http timeout? or something weird.
-      Rails.logger.warn("#{self.class.name}: Cloudflare turnstile validation error (#{request.remote_ip}, #{request.user_agent}): #{e}: #{response&.body}")
-      render json: {
-        success: false,
-        http_exception: e
+    end
+
+    def attach_session_cookie
+      session[self.bot_challenge_config.session_passed_key] = {
+        ::BotChallengePage::BotChallengePageController::SESSION_DATETIME_KEY => Time.now.utc.iso8601,
+        ::BotChallengePage::BotChallengePageController::SESSION_FINGERPRINT_KEY   => self.bot_challenge_config.session_valid_fingerprint.call(request)
       }
     end
+
+    module Verification
+      extend ActiveSupport::Concern
+
+      private
+
+      def verify_cloudflare
+        body = {
+          secret: self.bot_challenge_config.cf_turnstile_secret_key,
+          response: params["cf_turnstile_response"],
+          remoteip: request.remote_ip,
+        }
+
+        http = HTTP.timeout(self.bot_challenge_config.cf_timeout)
+        response = http.post(self.bot_challenge_config.cf_turnstile_validation_url,
+                             json: body)
+
+        response.parse
+        # {"success"=>true, "error-codes"=>[], "challenge_ts"=>"2025-01-06T17:44:28.544Z", "hostname"=>"example.com", "metadata"=>{"result_with_testing_key"=>true}}
+        # {"success"=>false, "error-codes"=>["invalid-input-response"], "messages"=>[], "metadata"=>{"result_with_testing_key"=>true}}
+      rescue HTTP::Error, JSON::ParserError => error
+        after_verify_error(error)
+      end
+
+      def after_challenge_failure(result)
+        self.bot_challenge_config.challenge_logger.warn(
+          "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.titleize} " +
+            "validation failed: #{result.inspect}" +
+            "Request from: #{request.remote_ip}, #{request.user_agent}"
+        )
+        # add config needed by JS to result
+        result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
+        # and let's just return the whole thing to client? Is there anything confidential there?
+        render json: result
+      end
+
+      # This runs after an internal server error
+      def after_verify_error(error)
+        Rails.logger.error "#{e.class} (#{e.message}):\n" + e.backtrace.join("\n")
+        # Also log it to the challenge/validation logger if it's not Rails.logger
+        if self.bot_challenge_config.challenge_logger != Rails.logger
+          self.bot_challenge_config.challenge_logger.warn(
+            "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.titleize} " +
+              "validation failed due to server error: #{error.message}. " +
+              "Request from: #{request.remote_ip}, #{request.user_agent}"
+          )
+        end
+        render json: { success: false, message: t('bot_challenge_page.error'), status: 500 }
+      end
+    end
+    include Verification
   end
 end
