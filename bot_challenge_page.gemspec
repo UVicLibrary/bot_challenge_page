@@ -26,4 +26,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", ">= 7.1", "< 8.2"
   spec.add_dependency "http", ">= 5.2", "< 7"
+  spec.add_dependency "altcha", ">=2.0"
 end

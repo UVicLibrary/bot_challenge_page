@@ -17,6 +17,8 @@ module BotChallengePage
       end
     end
 
+    attribute :challenge_provider, default: "cloudflare_turnstile"
+
     # Should we redirect to a challenge page (true) or just display it inline
     # with a 403 status (false)
     attribute :redirect_for_challenge, default: false
@@ -89,10 +91,28 @@ module BotChallengePage
     attribute :cf_turnstile_validation_url, default:  "https://challenges.cloudflare.com/turnstile/v0/siteverify"
     attribute :cf_timeout, default: 3 # max timeout seconds waiting on Cloudfront Turnstile api
 
-    # key stored in Rails session object with channge passed confirmed
+    # key stored in Rails session object with change passed confirmed
     attribute :session_passed_key, default: "bot_detection-passed"
 
     attribute :still_around_delay_ms, default: 1200
+
+    # Proof-of-Work options: https://playground.altcha.org/#/about
+    attribute :altcha_challenge_options, default: {
+      challenge_url: :inline, # Replace this with a URL if using ALTCHA Sentinel or another web server
+      algorithm: "PBKDF2/SHA-256",
+      cost: 5000,
+      # Omit counter to run in probabilistic mode, where generating a challenge
+      # is faster, but verifcation is slower and time-to-solve is less predictable
+      counter: 5_000,
+      hmac_signature_secret: ENV.fetch('ALTCHA_HMAC_SECRET', 'change-me-in-production'),
+      hmac_key_signature_secret: ENV.fetch('ALTCHA_HMAC_KEY_SECRET','change-me-in-production'),
+      expires_at: 5.minutes, # How long a challenge stays valid before it expires
+      cache_expires_at: 1.hour, # How long to cache solved challenges to prevent replay attacks
+                                # (https://altcha.org/docs/v2/security-recommendations/#replay-attacks)
+      theme: "default"
+    }
+
+    attribute :challenge_logger, default: Rails.logger
 
     # make sure dup dups all attributes please
     def initialize_dup(source)
