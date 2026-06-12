@@ -1,0 +1,12 @@
+<script src="/altcha/altcha.js" type="module"></script>
+<link href="/altcha/altcha.css" rel="stylesheet" />
+<% altcha_config = @bot_challenge_config.try(:altcha_challenge_options) || controller.class.bot_challenge_config.altcha_challenge_options %>
+
+<%# Filter out any config keys that are not used by the altcha-lib challenge interface %>
+<% challenge_options = Altcha::V2::CreateChallengeOptions.instance_method(:initialize).parameters.map(&:second) %>
+<% options = Altcha::V2::CreateChallengeOptions.new(
+                **altcha_config.select { |key,_val| challenge_options.include? key }
+                               .merge(expires_at: Time.now + altcha_config.fetch(:expires_at).seconds.to_i)) %>
+<div class="altcha-widget">
+  <altcha-widget retryOnOutOfMemoryError challenge="<%= Altcha::V2.create_challenge(options).to_h.to_json %>" theme="<%= altcha_config.fetch(:theme) %>"></altcha-widget>
+</div>

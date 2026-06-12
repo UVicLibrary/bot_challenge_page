@@ -98,11 +98,10 @@ module BotChallengePage
 
     # Proof-of-Work options: https://playground.altcha.org/#/about
     attribute :altcha_challenge_options, default: {
-      challenge_url: :inline, # Replace this with a URL if using ALTCHA Sentinel or another web server
       algorithm: "PBKDF2/SHA-256",
       cost: 5000,
-      # Omit counter to run in probabilistic mode, where generating a challenge
-      # is faster, but verifcation is slower and time-to-solve is less predictable
+      # Omit counter to run in probabilistic mode: faster challenge generation,
+      # at the cost of slower verification and less predictable time-to-solve
       counter: 5_000,
       hmac_signature_secret: ENV.fetch('ALTCHA_HMAC_SECRET', 'change-me-in-production'),
       hmac_key_signature_secret: ENV.fetch('ALTCHA_HMAC_KEY_SECRET','change-me-in-production'),
