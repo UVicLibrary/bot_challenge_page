@@ -9,19 +9,7 @@
 
   <%= t('bot_challenge_page.blurb_html') %>
 
-  <template id="botChallengePageErrorTemplate">
-    <div class="alert alert-danger" role="alert">
-      <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-      <%= t('bot_challenge_page.error') %>
-    </div>
-  </template>
-
-  <template id="botChallengePageStillAroundTemplate" data-still_around_delay_ms="<%= @bot_challenge_config.still_around_delay_ms %>">
-    <div class="alert alert-info" role="alert">
-      <i class="fa fa-info-circle" aria-hidden="true"></i>
-      <%= t('bot_challenge_page.still_around') %>
-    </div>
-  </template>
+  <%= render 'bot_challenge_page/bot_challenge_page/error_templates', bot_challenge_config: @bot_challenge_config %>
 
   <script src="<%= @bot_challenge_config.cf_turnstile_js_url %>" async defer></script>
 

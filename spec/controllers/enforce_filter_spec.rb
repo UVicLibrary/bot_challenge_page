@@ -8,7 +8,9 @@ describe DummyRateLimitController, type: :controller do
   # enable functionality, and reset config to fresh after any further changes
   around(:each) do |example|
     with_bot_challenge_config(BotChallengePage::BotChallengePageController,
-      enabled: true
+      enabled: true,
+      challenge_provider: "cloudflare_turnstile",
+      challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }
     ) { example.run }
   end
 

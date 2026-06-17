@@ -1,0 +1,16 @@
+<div class="bot_challenge_page">
+  <h1 class="mb-4"><%= t('bot_challenge_page.title') %></h1>
+
+  <%= render "bot_challenge_page/bot_challenge_page/altcha/altcha_widget", bot_challenge_config: @bot_challenge_config %>
+
+  <noscript>
+    <div class="alert alert-danger"><%= t('bot_challenge_page.noscript') %></div>
+  </noscript>
+  
+  <%= t('bot_challenge_page.blurb_html', good_for_duration: @bot_challenge_config.session_passed_good_for.inspect) %>
+
+  <%= render "bot_challenge_page/bot_challenge_page/error_templates", bot_challenge_config: @bot_challenge_config %>
+  
+  <%= render "bot_challenge_page/bot_challenge_page/altcha/local_altcha_script_tag", bot_challenge_config: @bot_challenge_config %>
+  
+</div>

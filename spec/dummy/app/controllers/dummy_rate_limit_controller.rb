@@ -3,6 +3,7 @@ class DummyRateLimitController < ApplicationController
 
   bot_challenge only: :immediate, unless: -> { params[:fake_skip_immediate] == "true"}
 
+  bot_challenge after: 1, within: 1.minute, only: :altcha_rate_limit_1, unless: -> { params[:fake_skip_rate_limit_1] == "true"}
   bot_challenge after: 1, within: 1.minute, only: :rate_limit_1, unless: -> { params[:fake_skip_rate_limit_1] == "true"}
 
   bot_challenge only: :download
@@ -15,6 +16,10 @@ class DummyRateLimitController < ApplicationController
   end
 
   def rate_limit_1
+    render plain: "rendered #rate_limit_1"
+  end
+  
+  def altcha_rate_limit_1
     render plain: "rendered #rate_limit_1"
   end
 

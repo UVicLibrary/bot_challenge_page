@@ -21,6 +21,8 @@ describe "Turnstile bot limiting", type: :system do
       enabled: true,
       cf_turnstile_sitekey: cf_turnstile_sitekey,
       cf_turnstile_secret_key:  cf_turnstile_secret_key,
+      challenge_provider: "cloudflare_turnstile",
+      challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }
     ) { example.run }
   end
 
@@ -39,13 +41,12 @@ describe "Turnstile bot limiting", type: :system do
     it "smoke tests" do
       visit dummy_rate_limit_1_path
       expect(page).to have_content(/rendered #rate_limit_1/)
-
       # on second try, we're gonna get a challenge page instead
       visit dummy_rate_limit_1_path
       expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
       # which eventually will reload and display original desired page page
-      expect(page).to have_content(/rendered #rate_limit_1/, wait: 4)
+      expect(page).to have_content(/rendered #rate_limit_1/, wait: 7)
     end
 
     describe "with redirect_for_challenge" do
@@ -64,7 +65,7 @@ describe "Turnstile bot limiting", type: :system do
         expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
         # which eventually will redirect back to original page
-        expect(page).to have_content(/rendered #rate_limit_1/, wait: 4)
+        expect(page).to have_content(/rendered #rate_limit_1/, wait: 7)
       end
     end
   end
@@ -91,7 +92,7 @@ describe "Turnstile bot limiting", type: :system do
       expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
       # which is going to get a failure message
-      expect(page).to have_content(I18n.t("bot_challenge_page.error"), wait: 4)
+      expect(page).to have_content(I18n.t("bot_challenge_page.error"), wait: 7)
       expect(Rails.logger).to have_received(:warn).with(/BotChallengePage::BotChallengePageController: Cloudflare Turnstile validation failed/)
     end
   end

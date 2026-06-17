@@ -15,11 +15,14 @@ Rails.application.routes.draw do
   # Added for bot_challenge_page engine
   get "/challenge", to: "bot_challenge_page/bot_challenge_page#challenge", as: :bot_detect_challenge
   post "/challenge", to: "bot_challenge_page/bot_challenge_page#verify_challenge"
-
+  
+  get "/altcha_challenge", to: "bot_challenge_page/bot_challenge_page#challenge", as: :altcha_bot_detect_challenge
+  post "/altcha_challenge", to: "bot_challenge_page/altcha_challenge#verify_challenge", as: :altcha_bot_challenge
 
   # dummy app paths we are testing
   get "/dummy/immediate", to: "dummy_rate_limit#immediate", as: :dummy_immediate
   get "/dummy/rate_limit_1", to: "dummy_rate_limit#rate_limit_1", as: :dummy_rate_limit_1
+  get "/dummy/altcha_rate_limit_1", to: "dummy_rate_limit#altcha_rate_limit_1", as: :altcha_dummy_rate_limit_1
   get "/dummy/download", to: "dummy_rate_limit#download", as: :dummy_download
 
   get "/alternate_dummy/rate_limit_1", to: "alternate_dummy_rate_limit#rate_limit_1", as: :alternate_dummy_rate_limit_1

@@ -3,12 +3,20 @@ require 'rails_helper'
 RSpec.describe BotChallengePage::BotChallengePageController, type: :controller do
   include WebmockTurnstileHelperMethods
 
+  around do |example|
+    with_bot_challenge_config(BotChallengePage::BotChallengePageController,
+                              challenge_provider: "cloudflare_turnstile",
+                              challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }) do
+
+      example.run
+    end
+  end
+  
   describe "#challenge" do
     render_views
 
     it "renders and includes expected values" do
       get :challenge
-
       expect(response).to have_http_status(403)
       expect(response.body).to include I18n.t("bot_challenge_page.title")
       expect(response.body).to include I18n.t("bot_challenge_page.blurb_html")
@@ -21,9 +29,10 @@ RSpec.describe BotChallengePage::BotChallengePageController, type: :controller d
     end
 
     describe "with custom render" do
+
       around do |example|
         with_bot_challenge_config(BotChallengePage::BotChallengePageController,
-          challenge_renderer: lambda { render template: "optional/some_template", layout: "optional_layout" }) do
+                                  challenge_renderer: lambda { render template: "optional/some_template", layout: "optional_layout" }) do
 
           example.run
         end

@@ -1,0 +1,79 @@
+<%# locals: (bot_challenge_config:) -%>
+
+<%# we deliver our simple javascript as inline script to make deployment more
+  reliable without having to deal with different asset pipelines, and it's really a fine choice anyway  %>
+<script type="text/javascript" async defer>
+    const widget = document.querySelector('altcha-widget');
+    widget.addEventListener('statechange', (ev) => {
+        if (ev.detail.state === "verified") {
+            // See enum State above
+            console.log('state:', ev.detail.state);
+            const solution = ev.detail.payload
+            // I don't know if we could be disabling CSRF instead for this one, but we'll just use it
+            const csrfToken = document.querySelector("[name='csrf-token']");
+            altchaCallback(solution, csrfToken);
+        }
+        
+        async function altchaCallback(solution, csrfToken) {
+            try {
+                let altchaUrl = new URL("<%= altcha_bot_challenge_url %>")
+                altchaUrl.searchParams.append('altcha', `${solution}`)
+                const response = await fetch(String(altchaUrl), {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-Token": csrfToken?.content
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('bad response: ' + response.status + ": " + response.url);
+                }
+                const result = await response.json();
+                console.log(result)
+                
+                if (result["success"] == true) {
+                    // in case this page stays around, (say it was redirected to media asset), let's add a failsafe message after
+                    // a couple seconds.
+                    const delay = document.querySelector("#botChallengePageStillAroundTemplate")?.getAttribute("data-still-around-delay-ms") || 1200;
+                    window.setTimeout(function() {
+                        _displayStillAroundNote()
+                    }, delay);
+
+                    if (result["redirect_for_challenge"] == true) {
+                        const dest = new URLSearchParams(window.location.search).get("dest");
+                        // For security make sure it only has path and on
+                        if (!dest.startsWith("/") || dest.startsWith("//")) {
+                            throw new Error("illegal non-local redirect: " + dest);
+                        }
+
+                        // replace the challenge page in history
+                        window.location.replace(dest);
+                    } else {
+                        // just need to reload and now we'll get through
+                        window.location.reload();
+                    }
+                } else {
+                    console.error("Altcha error: " + JSON.stringify(result))
+                    _displayChallengeError();
+                }
+            } catch(error) {
+                console.log(error)
+                _displayChallengeError()
+            }
+        }
+
+        function _displayChallengeError() {
+            const template = document.querySelector("#botChallengePageErrorTemplate");
+            const clone = template.content.cloneNode(true);
+            document.querySelector(".altcha-widget").replaceChildren(clone);
+        }
+
+        // If the page is still around after location changed, what's up?
+        // Warn them they might need t use back button, maybe it was a media download
+        function _displayStillAroundNote() {
+            const template = document.querySelector("#botChallengePageStillAroundTemplate");
+            const clone = template.content.cloneNode(true);
+            document.querySelector(".altcha-widget")?.after(clone);
+        }
+    });
+</script>
