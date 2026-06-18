@@ -95,6 +95,8 @@ module BotChallengePage
     attribute :session_passed_key, default: "bot_detection-passed"
 
     attribute :still_around_delay_ms, default: 1200
+    
+    attribute :altcha_js_url, default: "/altcha/altcha.js"
 
     # Proof-of-Work options: https://playground.altcha.org/#/about
     attribute :altcha_challenge_options, default: {

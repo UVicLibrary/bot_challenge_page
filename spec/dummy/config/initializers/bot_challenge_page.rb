@@ -3,8 +3,13 @@ BotChallengePage.configure do |config|
 
   # Get from CloudFlare Turnstile: https://www.cloudflare.com/application-services/products/turnstile/
   config.cf_turnstile_sitekey = "1x00000000000000000000AA"
+  
+  # Passing test key
   config.cf_turnstile_secret_key = "1x0000000000000000000000000000000AA"
-
+  
+  # Failing test key
+  # config.cf_turnstile_secret_key = "2x0000000000000000000000000000000AA"
+  
   # Uncomment to replace Cloudflare widget with Altcha widget
   # config.challenge_provider = "altcha"
 

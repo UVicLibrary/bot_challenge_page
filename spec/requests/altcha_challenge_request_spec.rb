@@ -2,41 +2,15 @@
 require 'rails_helper'
 
 RSpec.describe "altcha challenge request", type: :request do
+  include AltchaHelperMethods
+  
   describe 'verifying a challenge' do
-    let(:challenge) do
-      valid_options = Altcha::V2::CreateChallengeOptions.instance_method(:initialize).parameters.map(&:second)
-      options = Altcha::V2::CreateChallengeOptions.new(
-        **altcha_config.select { |key,_val| valid_options.include? key }
-                    .merge(expires_at: expires_at))
-      Altcha::V2.create_challenge(options)
-    end
-
+    let(:challenge) { stub_altcha_challenge(expires_at: expires_at) }
+    let(:altcha_config) { stub_altcha_config }
     let(:expires_at) { Time.now + altcha_config.fetch(:expires_at).seconds.to_i }
     
-    # Keep the challenge cost very low so that tests run faster
-    let(:altcha_config) do
-      BotChallengePage::AltchaChallengeController.new
-       .bot_challenge_config
-       .altcha_challenge_options
-       .merge({
-               algorithm: "PBKDF2/SHA-256",
-               cost: 10,
-               counter: 1
-             })
-    end
-    
-    # Temporarily change desired mocked config
-    # Kinda hacky because we need to keep re-registering the tracks
     around(:each) do |example|
-      with_bot_challenge_config(BotChallengePage::AltchaChallengeController,
-                                enabled: true,
-                                challenge_provider: "altcha",
-                                challenge_renderer: ->() {
-                                  render 'bot_challenge_page/bot_challenge_page/altcha_challenge'
-                                },
-                                altcha_challenge_options: altcha_config,
-                                challenge_logger: Rails.logger
-      ) { example.run }
+      with_altcha_challenge_config(BotChallengePage::AltchaChallengeController) { example.run }
     end
 
     let(:solution) do

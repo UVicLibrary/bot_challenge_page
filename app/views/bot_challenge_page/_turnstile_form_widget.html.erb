@@ -1,0 +1,5 @@
+<%# locals: (bot_challenge_config:) -%>
+<script src="<%= bot_challenge_config.cf_turnstile_js_url %>" async defer></script>
+<%# https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/widget-configurations/#form-integration %>
+<div class="cf-turnstile" data-sitekey="<%= bot_challenge_config.cf_turnstile_sitekey %>"
+     data-response-field-name="cf_turnstile_response"></div>

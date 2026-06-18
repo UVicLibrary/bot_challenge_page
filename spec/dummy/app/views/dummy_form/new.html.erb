@@ -1,0 +1,15 @@
+<% flash.each do |_type, msg| %>
+  <div>
+    <%= msg %>
+  </div>
+<% end %><br />
+<%= form_with url: "/dummy_form", method: :post do |form| %>
+  <%= form.label :data, "Data:" %>
+  <%= form.search_field :data %><br /><br />
+  <% if @bot_challenge_config.challenge_provider == "altcha" %>
+    <%= render 'bot_challenge_page/bot_challenge_page/altcha/altcha_widget', bot_challenge_config: @bot_challenge_config %><br />
+  <% else %>
+    <%= render 'bot_challenge_page/turnstile_form_widget', bot_challenge_config: @bot_challenge_config %><br />
+  <% end %>
+  <%= form.submit "Submit" %>
+<% end %>

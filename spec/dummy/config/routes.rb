@@ -24,6 +24,9 @@ Rails.application.routes.draw do
   get "/dummy/rate_limit_1", to: "dummy_rate_limit#rate_limit_1", as: :dummy_rate_limit_1
   get "/dummy/altcha_rate_limit_1", to: "dummy_rate_limit#altcha_rate_limit_1", as: :altcha_dummy_rate_limit_1
   get "/dummy/download", to: "dummy_rate_limit#download", as: :dummy_download
+  
+  get "/dummy_form/new", to: "dummy_form#new", as: :new_dummy_form
+  post "/dummy_form", to: "dummy_form#create", as: :dummy_form
 
   get "/alternate_dummy/rate_limit_1", to: "alternate_dummy_rate_limit#rate_limit_1", as: :alternate_dummy_rate_limit_1
   get "/alternate_dummy/rate_limit_1_with_separate_counter", to: "alternate_dummy_rate_limit#rate_limit_1_with_separate_counter", as: :alternate_dummy_rate_limit_1_with_separate_counter
