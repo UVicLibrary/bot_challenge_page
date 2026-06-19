@@ -78,7 +78,8 @@ module BotChallengePage
                    else
                      'Incorrect solution'
                    end
-          self.bot_challenge_config.challenge_logger.warn(
+          logger = self.bot_challenge_config.challenge_logger || Rails.logger
+          logger.warn(
             "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.capitalize} " +
               "validation failed: #{result.inspect}" +
               "Request from: #{request.remote_ip}, #{request.user_agent}"
@@ -96,8 +97,8 @@ module BotChallengePage
       def after_verify_error(error)
         Rails.logger.error "#{e.class} (#{e.message}):\n" + e.backtrace.join("\n")
         # Also log it to the challenge/validation logger
-        if self.bot_challenge_config.failed_attempt_logger != Rails.logger
-          self.bot_challenge_config.failed_attempt_logger.warn(
+        if self.bot_challenge_config.challenge_logger
+          self.bot_challenge_config.challenge_logger.warn(
             "#{self.class.name}: Altcha validation failed due to server error: #{error.message}. " +
               "Request from: #{request.remote_ip}, #{request.user_agent}"
           )

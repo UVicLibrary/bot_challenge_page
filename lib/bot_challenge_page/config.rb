@@ -113,7 +113,12 @@ module BotChallengePage
       theme: "default"
     }
 
-    attribute :challenge_logger, default: Rails.logger
+    # Optional: Log failed challenge attempts to a custom logger, e.g. in your initializer:
+    # config.challenge_logger = ActiveSupport::Logger.new(
+    #                             Rails.root.join('log', 'bot_challenge_page', 'failed_challenges.log'),
+    #                             'daily'
+    #                           )
+    attribute :challenge_logger, default: nil
 
     # make sure dup dups all attributes please
     def initialize_dup(source)

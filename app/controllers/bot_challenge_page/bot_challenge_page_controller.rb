@@ -85,7 +85,8 @@ module BotChallengePage
       end
 
       def after_challenge_failure(result)
-        self.bot_challenge_config.challenge_logger.warn(
+        logger = self.bot_challenge_config.challenge_logger || Rails.logger
+        logger.warn(
           "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.titleize} " +
             "validation failed: #{result.inspect}" +
             "Request from: #{request.remote_ip}, #{request.user_agent}"
@@ -100,7 +101,7 @@ module BotChallengePage
       def after_verify_error(error)
         Rails.logger.error "#{e.class} (#{e.message}):\n" + e.backtrace.join("\n")
         # Also log it to the challenge/validation logger if it's not Rails.logger
-        if self.bot_challenge_config.challenge_logger != Rails.logger
+        if self.bot_challenge_config.challenge_logger
           self.bot_challenge_config.challenge_logger.warn(
             "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.titleize} " +
               "validation failed due to server error: #{error.message}. " +
