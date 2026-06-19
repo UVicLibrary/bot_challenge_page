@@ -1,13 +1,10 @@
 require 'rails_helper'
 
-describe "Challenge page stays around persistently", type: :system do
-  include WebmockTurnstileHelperMethods
+describe "Challenge page stays around persistently", type: :system, 
+                                                     provider: :cloudflare_turnstile, 
+                                                     options: { still_around_delay_ms: 1 } do
 
-  around do |example|
-    # shorten up the delay to make the test faster
-    with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController,
-      still_around_delay_ms: 1) { example.run }
-  end
+  include WebmockTurnstileHelperMethods
 
   before do
     stub_turnstile_success(request_body: {

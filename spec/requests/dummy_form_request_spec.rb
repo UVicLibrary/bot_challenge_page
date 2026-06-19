@@ -11,10 +11,7 @@ RSpec.describe "dummy form request", type: :system do
     ActionController::Base.cache_store.clear
   end
   
-  context 'with altcha challenge provider' do
-    around(:each) do |example|
-      with_altcha_challenge_config(DummyFormController) { example.run }
-    end
+  context 'with altcha challenge provider', provider: :altcha, controller: DummyFormController do
 
     describe 'setting up the form' do
       it 'turns caching off and preloads the JS' do
@@ -63,10 +60,7 @@ RSpec.describe "dummy form request", type: :system do
 
   context 'with cloudflare turnstile' do
     
-    context 'when challenge is successful' do
-      around(:each) do |example|
-        with_cloudflare_challenge_config(DummyFormController) { example.run }
-      end
+    context 'when challenge is successful', provider: :cloudflare_turnstile, controller: DummyFormController do
       
       let(:cf_turnstile_secret_key) { "1x0000000000000000000000000000000AA" } # a testing key always passes
       
@@ -94,10 +88,11 @@ RSpec.describe "dummy form request", type: :system do
       end
     end
     
-    context 'when challenge is not successful' do
-      around(:each) do |example|
-        with_cloudflare_challenge_config(DummyFormController, passing: false) { example.run }
-      end
+    context 'when challenge is not successful', provider: :cloudflare_turnstile, controller: DummyFormController, 
+                                                                                 passing: false do
+      # around(:each) do |example|
+      #   with_cloudflare_challenge_config(DummyFormController, passing: false) { example.run }
+      # end
       
       let(:cf_turnstile_secret_key) { "2x0000000000000000000000000000000AA" } # a testing key that produces failure
 

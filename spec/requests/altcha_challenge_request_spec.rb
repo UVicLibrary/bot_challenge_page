@@ -4,15 +4,10 @@ require 'rails_helper'
 RSpec.describe "altcha challenge request", type: :request do
   include AltchaHelperMethods
   
-  describe 'verifying a challenge' do
+  describe 'verifying a challenge', provider: :altcha do
     let(:challenge) { stub_altcha_challenge(expires_at: expires_at) }
     let(:altcha_config) { stub_altcha_config }
     let(:expires_at) { Time.now + altcha_config.fetch(:expires_at).seconds.to_i }
-    
-    around(:each) do |example|
-      with_altcha_challenge_config(BotChallengePage::AltchaChallengeController) { example.run }
-    end
-
     let(:solution) do
       Altcha::V2::Payload.new(challenge: challenge, solution: Altcha::V2.solve_challenge(challenge)).to_json
     end

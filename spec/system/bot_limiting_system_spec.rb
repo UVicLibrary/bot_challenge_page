@@ -10,14 +10,8 @@ describe "Bot limiting", type: :system do
 
   context 'using Cloudflare Turnstile' do
 
-    describe "succesful challenge" do
-      
-      # Temporarily change desired mocked config
-      # Kinda hacky because we need to keep re-registering the tracks
-      around(:each) do |example|
-        with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController) { example.run }
-      end
-      
+    describe "succesful challenge", provider: :cloudflare_turnstile do
+            
       before do
         stub_turnstile_success(request_body: {
           "secret"=>BotChallengePage::BotChallengePageController.bot_challenge_config.cf_turnstile_secret_key,
@@ -38,7 +32,7 @@ describe "Bot limiting", type: :system do
 
       describe "with redirect_for_challenge" do
         around do |example|
-          with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController,
+          with_bot_challenge_config(BotChallengePage::BotChallengePageController,
                                            redirect_for_challenge: true
           ) { example.run }
         end
@@ -57,12 +51,8 @@ describe "Bot limiting", type: :system do
       end
     end
 
-    describe "failed challenge" do
-
-      around(:each) do |example|
-        with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController, passing: false) { example.run }
-      end
-
+    describe "failed challenge", provider: :cloudflare_turnstile, passing: false do
+      
       before do
         allow(Rails.logger).to receive(:warn)
         stub_turnstile_failure(request_body: {
@@ -86,16 +76,10 @@ describe "Bot limiting", type: :system do
     end
   end
   
-  context 'using Altcha' do
+  context 'using Altcha', provider: :altcha, controller: BotChallengePage::BotChallengePageController do
     # We're just testing displaying the challenge here, since Altcha seems
     # to block Capybara/Selenium from checking the box for testing...
     # which is probably a good thing overall!
-    
-    # Testing the challenge creation/solution happens in requests/altcha_challenge_request_spec.
-    
-    around(:each) do |example|
-      with_altcha_challenge_config(BotChallengePage::BotChallengePageController) { example.run }
-    end
 
     describe "limiting after 1 request" do
 

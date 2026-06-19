@@ -80,6 +80,51 @@ RSpec.configure do |config|
   # config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  config.around(:example, provider: :altcha) do |example|
+    controller = example.metadata[:controller] || BotChallengePage::AltchaChallengeController
+    options = example.metadata[:options] || {}
+    original_config = controller.bot_challenge_config.dup
+    
+    altcha_options = {
+      enabled: true,
+      challenge_provider: "altcha",
+      challenge_renderer: ->() {
+        render 'bot_challenge_page/bot_challenge_page/altcha_challenge'
+      }
+    }
+    set_config(controller, **altcha_options.merge(options))
+    example.run
+    reset_config(controller, original_config)
+  end
+
+  config.around(:example, provider: :cloudflare_turnstile) do |example|
+    controller = example.metadata[:controller] || BotChallengePage::BotChallengePageController
+    options = example.metadata[:options] || {}
+    original_config = controller.bot_challenge_config.dup
+
+    cf_turnstile_sitekey = options.fetch(:cf_turnstile_sitekey, "1x00000000000000000000AA")
+    cf_turnstile_secret_key = if options.fetch(:cf_turnstile_secret_key, nil)
+                                options.fetch(:cf_turnstile_secret_key)
+                              else
+                                # Set challenge to passing by default
+                                if example.metadata[:passing] == false
+                                  "2x0000000000000000000000000000000AA"
+                                else
+                                  "1x0000000000000000000000000000000AA"
+                                end
+                              end
+    cloudflare_options = {
+      enabled: true,
+      cf_turnstile_sitekey: cf_turnstile_sitekey,
+      cf_turnstile_secret_key:  cf_turnstile_secret_key,
+      challenge_provider: "cloudflare_turnstile",
+      challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }
+    }
+    set_config(controller, **cloudflare_options.merge(options))
+    example.run
+    reset_config(controller, original_config)
+  end
 end
 
 

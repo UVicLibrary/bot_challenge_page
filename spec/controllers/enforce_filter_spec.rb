@@ -2,13 +2,8 @@ require 'rails_helper'
 
 # We spec that the BotDetect filter is actually applying protection, as well as exempting what
 # we want
-describe DummyRateLimitController, type: :controller do
+describe DummyRateLimitController, type: :controller, provider: :cloudflare_turnstile do
   render_views
-
-  # enable functionality, and reset config to fresh after any further changes
-  around(:each) do |example|
-    with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController) { example.run }
-  end
 
   describe "immediate filter" do
     it "displays challenge even with no ENV request" do

@@ -1,13 +1,7 @@
 require 'rails_helper'
 
-RSpec.describe BotChallengePage::BotChallengePageController, type: :controller do
+RSpec.describe BotChallengePage::BotChallengePageController, type: :controller, provider: :cloudflare_turnstile do
   include WebmockTurnstileHelperMethods
-
-  around do |example|
-    with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController) do
-      example.run
-    end
-  end
   
   describe "#challenge" do
     render_views
