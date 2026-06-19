@@ -22,7 +22,6 @@ Rails.application.routes.draw do
   # dummy app paths we are testing
   get "/dummy/immediate", to: "dummy_rate_limit#immediate", as: :dummy_immediate
   get "/dummy/rate_limit_1", to: "dummy_rate_limit#rate_limit_1", as: :dummy_rate_limit_1
-  get "/dummy/altcha_rate_limit_1", to: "dummy_rate_limit#altcha_rate_limit_1", as: :altcha_dummy_rate_limit_1
   get "/dummy/download", to: "dummy_rate_limit#download", as: :dummy_download
   
   get "/dummy_form/new", to: "dummy_form#new", as: :new_dummy_form

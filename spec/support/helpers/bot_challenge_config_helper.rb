@@ -6,20 +6,22 @@ module BotChallengeConfigHelper
     reset_config(controller)
   end
   
-  def with_cloudflare_challenge_config(controller, passing_secret_key: true, **args)
+  def with_cloudflare_challenge_config(controller, passing: true, **args)
     @orig_config = controller.bot_challenge_config.dup
     cf_turnstile_sitekey = args.fetch(:cf_turnstile_sitekey, "1x00000000000000000000AA")
     cf_turnstile_secret_key = if args.fetch(:cf_turnstile_secret_key, nil).present?
                                 args.fetch(:cf_turnstile_secret_key)
                               else
-                                passing_secret_key ? "1x0000000000000000000000000000000AA" : "2x0000000000000000000000000000000AA"
+                                passing ? "1x0000000000000000000000000000000AA" : "2x0000000000000000000000000000000AA"
                               end
 
     set_config(controller, args.merge(
       enabled: true,
       cf_turnstile_sitekey: cf_turnstile_sitekey,
       cf_turnstile_secret_key:  cf_turnstile_secret_key,
-      challenge_provider: "cloudflare_turnstile"
+      challenge_provider: "cloudflare_turnstile",
+      challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 },
+      challenge_logger: Rails.logger
     ))
     yield
     reset_config(controller)

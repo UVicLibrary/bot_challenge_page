@@ -65,7 +65,7 @@ RSpec.describe "dummy form request", type: :system do
     
     context 'when challenge is successful' do
       around(:each) do |example|
-        with_cloudflare_challenge_config(DummyFormController, passing_secret_key: true) { example.run }
+        with_cloudflare_challenge_config(DummyFormController) { example.run }
       end
       
       let(:cf_turnstile_secret_key) { "1x0000000000000000000000000000000AA" } # a testing key always passes
@@ -96,7 +96,7 @@ RSpec.describe "dummy form request", type: :system do
     
     context 'when challenge is not successful' do
       around(:each) do |example|
-        with_cloudflare_challenge_config(DummyFormController, passing_secret_key: false) { example.run }
+        with_cloudflare_challenge_config(DummyFormController, passing: false) { example.run }
       end
       
       let(:cf_turnstile_secret_key) { "2x0000000000000000000000000000000AA" } # a testing key that produces failure

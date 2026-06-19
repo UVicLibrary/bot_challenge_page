@@ -5,14 +5,8 @@ describe "Challenge page stays around persistently", type: :system do
 
   around do |example|
     # shorten up the delay to make the test faster
-    with_bot_challenge_config(BotChallengePage::BotChallengePageController,
-      still_around_delay_ms: 1,
-      # auto-pass-key
-      cf_turnstile_sitekey: "1x00000000000000000000AA",
-      cf_turnstile_secret_key: "1x0000000000000000000000000000000AA",
-      challenge_provider: "cloudflare_turnstile",
-      challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }
-    ) { example.run }
+    with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController,
+      still_around_delay_ms: 1) { example.run }
   end
 
   before do

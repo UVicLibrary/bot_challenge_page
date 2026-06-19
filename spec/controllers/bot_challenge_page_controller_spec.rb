@@ -4,10 +4,7 @@ RSpec.describe BotChallengePage::BotChallengePageController, type: :controller d
   include WebmockTurnstileHelperMethods
 
   around do |example|
-    with_bot_challenge_config(BotChallengePage::BotChallengePageController,
-                              challenge_provider: "cloudflare_turnstile",
-                              challenge_renderer: lambda { render "bot_challenge_page/bot_challenge_page/challenge", status: 403 }) do
-
+    with_cloudflare_challenge_config(BotChallengePage::BotChallengePageController) do
       example.run
     end
   end
@@ -33,7 +30,6 @@ RSpec.describe BotChallengePage::BotChallengePageController, type: :controller d
       around do |example|
         with_bot_challenge_config(BotChallengePage::BotChallengePageController,
                                   challenge_renderer: lambda { render template: "optional/some_template", layout: "optional_layout" }) do
-
           example.run
         end
       end
