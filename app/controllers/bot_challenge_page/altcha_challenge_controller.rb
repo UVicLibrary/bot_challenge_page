@@ -67,24 +67,15 @@ module BotChallengePage
       end
 
       def after_challenge_failure(result)
+        result = AltchaResult.new(result)
         if self.bot_challenge_config.challenge_provider == "altcha"
-          reason = if result.is_a? String
-                     # result of a JSON::ParserError
-                     'Incorrect solution'
-                   elsif result.expired
-                     'Challenge expired'
-                   elsif result.invalid_signature
-                     'Invalid challenge signature'
-                   else
-                     'Incorrect solution'
-                   end
           logger = self.bot_challenge_config.challenge_logger || Rails.logger
           logger.warn(
             "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.capitalize} " +
               "validation failed: #{result.inspect}" +
               "Request from: #{request.remote_ip}, #{request.user_agent}"
           )
-          render json: { message: reason }, status: 400, success: false
+          render json: { message: result.message }, status: 400, success: false
         else
           # Call super here because this module is included in form validation
           # (controllers/concerns/bot_challenge_page/guard_form), and we want to 
@@ -108,7 +99,6 @@ module BotChallengePage
       
       # https://altcha.org/docs/v2/security-recommendations/#replay-attacks
       def replay_attack?
-
         cache_store = self.bot_challenge_config.store || self.cache_store
         cache_key = JSON.parse(Base64.decode64(params[:altcha]))['challenge']['signature']
         return true if cache_store.exist?("#{self.cache_key_prefix}_#{cache_key}")
@@ -124,4 +114,30 @@ module BotChallengePage
     include Verification
   end
   class CacheMissingError < StandardError; end
+
+  # A light wrapper class to allow result to respond to :message
+  class AltchaResult
+
+    # @param Altcha::V2::VerifySolutionResult
+    def initialize(result)
+      @result = result
+    end
+    attr_reader :result
+    
+    def message
+      if result.is_a? String
+        # result of a JSON::ParserError
+        I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
+      elsif result.expired
+        I18n.t('bot_challenge_page.altcha_error.expired')
+      elsif result.invalid_signature
+        I18n.t('bot_challenge_page.altcha_error.invalid_signature')
+      else
+        I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
+      end
+    end
+    
+    # Make some methods available as a courtesy for downstream apps
+    delegate :verified, :expired, :invalid_signature, to: :result
+  end
 end

@@ -48,11 +48,11 @@ RSpec.describe "dummy form request", type: :system do
           allow_any_instance_of(BotChallengePage::Config).to receive(:after_blocked).and_return(Proc.new {})
         end
         
-        it 're-renders the form page' do
+        it 'calls a customized #after_challenge_failure action' do
           # Soft check that after_blocked proc is called
           expect_any_instance_of(BotChallengePage::Config).to receive(:after_blocked)
           post '/dummy_form', params: { altcha: Base64.encode64(solution), data: "Some data" }
-          expect(response.body).to match("Challenge failed")
+          expect(response.body).to match("Incorrect solution")
         end
       end
     end
