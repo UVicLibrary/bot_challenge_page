@@ -9,3 +9,4 @@ en:
       incorrect_solution: Incorrect solution
       expired: Challenge expired
       invalid_signature: Invalid signature
+      replay_attack: Solution can't be reused

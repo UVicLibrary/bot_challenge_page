@@ -37,7 +37,7 @@ module BotChallengePage
                   raise "Challenge provider not recognized. Accepted options are " +
                           "'altcha' or 'cloudflare_turnstile'"
                 end
-      unless verified?
+      unless @result.verified
         # allow app to see and log if desired
         self.instance_exec(self, &self.bot_challenge_config.after_blocked)
         # Override this method in your controller. By default, 
@@ -64,17 +64,6 @@ module BotChallengePage
         self.headers["link"] += ",#{preload_link_value}"
       else
         self.headers["link"] = "#{preload_link_value}"
-      end
-    end
-
-    private
-    
-    def verified?
-      if self.bot_challenge_config.challenge_provider == "altcha"
-        return false unless @result.is_a?(Altcha::V2::VerifySolutionResult)
-        @result.verified && !replay_attack?
-      else
-        @result['success'].present?
       end
     end
   end

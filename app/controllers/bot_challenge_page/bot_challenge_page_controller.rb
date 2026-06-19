@@ -36,7 +36,7 @@ module BotChallengePage
 
     def verify_challenge
       @result = verify_cloudflare
-      if @result['success']
+      if @result.verified
         after_challenge_success(@result)
       else
         after_challenge_failure(@result)
@@ -49,9 +49,9 @@ module BotChallengePage
     def after_challenge_success(result)
       attach_session_cookie
       # add config needed by JS to result
-      result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
+      result.result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
       # and let's just return the whole thing to client? Is there anything confidential there?
-      render json: result
+      render json: result.result
     end
 
     def attach_session_cookie
@@ -76,10 +76,9 @@ module BotChallengePage
         http = HTTP.timeout(self.bot_challenge_config.cf_timeout)
         response = http.post(self.bot_challenge_config.cf_turnstile_validation_url,
                              json: body)
-
-        response.parse
         # {"success"=>true, "error-codes"=>[], "challenge_ts"=>"2025-01-06T17:44:28.544Z", "hostname"=>"example.com", "metadata"=>{"result_with_testing_key"=>true}}
         # {"success"=>false, "error-codes"=>["invalid-input-response"], "messages"=>[], "metadata"=>{"result_with_testing_key"=>true}}
+        Result.new(response.parse)
       rescue HTTP::Error, JSON::ParserError => error
         after_verify_error(error)
       end
@@ -92,9 +91,9 @@ module BotChallengePage
             "Request from: #{request.remote_ip}, #{request.user_agent}"
         )
         # add config needed by JS to result
-        result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
+        result.result["redirect_for_challenge"] = self.bot_challenge_config.redirect_for_challenge
         # and let's just return the whole thing to client? Is there anything confidential there?
-        render json: result
+        render json: result.result
       end
 
       # This runs after an internal server error
@@ -109,6 +108,25 @@ module BotChallengePage
           )
         end
         render json: { success: false, message: t('bot_challenge_page.error'), status: 500 }
+      end
+
+      # A light wrapper class to allow result to respond to :error_message
+      class Result
+        
+        # @param Hash
+        def initialize(result)
+          @result = result
+        end
+        attr_reader :result
+        
+        def verified
+          result['success']
+        end
+        
+        def error_message
+          I18n.t('bot_challenge_page.error')
+        end
+        
       end
     end
     include Verification

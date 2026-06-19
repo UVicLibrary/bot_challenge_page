@@ -4,7 +4,7 @@ module BotChallengePage
     def verify_challenge
       altcha_params
       @result = verify_altcha
-      if @result.verified && !replay_attack?
+      if @result.verified
         after_challenge_success(@result)
       else
         after_challenge_failure(@result)
@@ -58,7 +58,7 @@ module BotChallengePage
                        hmac_key_signature_secret: config[:hmac_signature_key_secret]
                      )
                    end
-          result
+          Result.new(result, replay_attack?)
         rescue JSON::ParserError,NoMethodError => error
           after_challenge_failure(error)
         rescue RuntimeError => error
@@ -67,7 +67,6 @@ module BotChallengePage
       end
 
       def after_challenge_failure(result)
-        result = AltchaResult.new(result)
         if self.bot_challenge_config.challenge_provider == "altcha"
           logger = self.bot_challenge_config.challenge_logger || Rails.logger
           logger.warn(
@@ -75,7 +74,7 @@ module BotChallengePage
               "validation failed: #{result.inspect}" +
               "Request from: #{request.remote_ip}, #{request.user_agent}"
           )
-          render json: { message: result.message }, status: 400, success: false
+          render json: { message: result.error_message }, status: 400, success: false
         else
           # Call super here because this module is included in form validation
           # (controllers/concerns/bot_challenge_page/guard_form), and we want to 
@@ -110,34 +109,36 @@ module BotChallengePage
         end
         false
       end
-    end
-    include Verification
-  end
-  class CacheMissingError < StandardError; end
 
-  # A light wrapper class to allow result to respond to :message
-  class AltchaResult
+      # A light wrapper class to allow result to respond to :error_message
+      class Result
+        
+        # @param Altcha::V2::VerifySolutionResult
+        def initialize(result, replay_attack)
+          @result = result.tap { |result| result.verified = false if replay_attack }
+          @replay_attack = replay_attack
+        end
+        attr_reader :result, :replay_attack
+        
+        # Make some methods available as a courtesy for downstream apps
+        # even if we don't use all these options ourselves
+        delegate :verified, :verified=, :expired, :invalid_signature, to: :result
 
-    # @param Altcha::V2::VerifySolutionResult
-    def initialize(result)
-      @result = result
-    end
-    attr_reader :result
-    
-    def message
-      if result.is_a? String
-        # result of a JSON::ParserError
-        I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
-      elsif result.expired
-        I18n.t('bot_challenge_page.altcha_error.expired')
-      elsif result.invalid_signature
-        I18n.t('bot_challenge_page.altcha_error.invalid_signature')
-      else
-        I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
+        def error_message
+          if result.is_a? String # result of a JSON::ParserError
+            I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
+          elsif result.expired
+            I18n.t('bot_challenge_page.altcha_error.expired')
+          elsif result.invalid_signature
+            I18n.t('bot_challenge_page.altcha_error.invalid_signature')
+          elsif replay_attack
+            I18n.t('bot_challenge_page.altcha_error.replay_attack')
+          else
+            I18n.t('bot_challenge_page.altcha_error.incorrect_solution')
+          end
+        end
       end
     end
-    
-    # Make some methods available as a courtesy for downstream apps
-    delegate :verified, :expired, :invalid_signature, to: :result
+    include Verification
   end
 end

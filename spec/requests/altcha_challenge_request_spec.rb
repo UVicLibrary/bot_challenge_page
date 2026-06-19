@@ -69,7 +69,7 @@ RSpec.describe "altcha challenge request", type: :request do
         post '/altcha_challenge', params: { altcha: Base64.encode64(repeat_solution) }
         expect(response.status).to eq 400
         expect(response).not_to be_successful
-        expect(JSON.parse(response.body)['message']).to eq 'Incorrect solution'
+        expect(JSON.parse(response.body)['message']).to eq "Solution can't be reused"
       end
     end
   end

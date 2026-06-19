@@ -13,7 +13,13 @@ class DummyFormController < ApplicationController
   end
 
   def after_challenge_failure(result)
-    flash[:alert] = result.message
+    flash[:alert] = result.error_message
+    prepare_challenge
+    render :new
+  end
+
+  def after_verify_error(error)
+    flash[:error] = "Sorry, something went wrong. Please try again."
     prepare_challenge
     render :new
   end

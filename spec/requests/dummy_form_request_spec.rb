@@ -49,7 +49,7 @@ RSpec.describe "dummy form request", type: :system do
         end
         
         it 'calls a customized #after_challenge_failure action' do
-          # Soft check that after_blocked proc is called
+          # Soft check that after_blocked proc is still called
           expect_any_instance_of(BotChallengePage::Config).to receive(:after_blocked)
           post '/dummy_form', params: { altcha: Base64.encode64(solution), data: "Some data" }
           expect(response.body).to match("Incorrect solution")
@@ -90,9 +90,6 @@ RSpec.describe "dummy form request", type: :system do
     
     context 'when challenge is not successful', provider: :cloudflare_turnstile, controller: DummyFormController, 
                                                                                  passing: false do
-      # around(:each) do |example|
-      #   with_cloudflare_challenge_config(DummyFormController, passing: false) { example.run }
-      # end
       
       let(:cf_turnstile_secret_key) { "2x0000000000000000000000000000000AA" } # a testing key that produces failure
 
@@ -112,7 +109,7 @@ RSpec.describe "dummy form request", type: :system do
         # Soft check that after_blocked proc is called
         expect_any_instance_of(BotChallengePage::Config).to receive(:after_blocked)
         find('input[type="submit"]').click
-        expect(page).to have_text("Challenge failed", wait: 4)
+        expect(page).to have_text(I18n.t('.bot_challenge_page.error'), wait: 4)
       end
     end
   end
