@@ -6,6 +6,7 @@ gem "puma"
 gem "sqlite3"
 gem "propshaft"
 gem "byebug"
+gem "altcha"
 gem "rubocop-rails-omakase", require: false
 gem "rails", "~> 8.1"
 

@@ -54,8 +54,6 @@ RSpec.describe BotChallengePage::BotChallengePageController, type: :controller, 
     end
 
     it "handles turnstile failure" do
-      allow(controller.bot_challenge_config).to receive(:challenge_logger).and_return(ActiveSupport::TaggedLogging.logger(STDOUT))
-      
       turnstile_response = stub_turnstile_failure
 
       post :verify_challenge, params: { cf_turnstile_response: "XXXX.DUMMY.TOKEN.XXXX" }
