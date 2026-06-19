@@ -27,7 +27,7 @@ describe "Bot limiting", type: :system do
         expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
         # which eventually will reload and display original desired page page
-        expect(page).to have_content(/rendered #rate_limit_1/, wait: 7)
+        expect(page).to have_content(/rendered #rate_limit_1/, wait: 4)
       end
 
       describe "with redirect_for_challenge" do
@@ -46,7 +46,7 @@ describe "Bot limiting", type: :system do
           expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
           # which eventually will redirect back to original page
-          expect(page).to have_content(/rendered #rate_limit_1/, wait: 7)
+          expect(page).to have_content(/rendered #rate_limit_1/, wait: 4)
         end
       end
     end
@@ -60,7 +60,7 @@ describe "Bot limiting", type: :system do
           "response"=>"XXXX.DUMMY.TOKEN.XXXX", "remoteip"=>"127.0.0.1"
         })
       end
-
+      
       it "stays on page with failure" do
         visit dummy_rate_limit_1_path
         expect(page).to have_content(/rendered #rate_limit_1/)
@@ -70,8 +70,33 @@ describe "Bot limiting", type: :system do
         expect(page).to have_content(I18n.t("bot_challenge_page.title"))
 
         # which is going to get a failure message
-        expect(page).to have_content(I18n.t("bot_challenge_page.error"), wait: 7)
+        expect(page).to have_content(I18n.t("bot_challenge_page.error"), wait: 4)
         expect(Rails.logger).to have_received(:warn).with(/BotChallengePage::BotChallengePageController: Cloudflare Turnstile validation failed/)
+      end
+      
+      context 'with custom logger configured' do
+        let(:logger) { double(ActiveSupport::Logger) }
+        
+        around(:example) do |example|
+          with_bot_challenge_config(BotChallengePage::BotChallengePageController,
+                                    challenge_logger: logger
+                                    )  { example.run }
+        end
+        
+        before { allow(logger).to receive(:warn) }
+        
+        it 'logs the failed challenge to the custom logger' do
+          visit dummy_rate_limit_1_path
+          expect(page).to have_content(/rendered #rate_limit_1/)
+
+          # on second try, we're gonna get redirected to bot check page
+          visit dummy_rate_limit_1_path
+          expect(page).to have_content(I18n.t("bot_challenge_page.title"))
+          
+          # which is going to get a failure message
+          expect(page).to have_content(I18n.t("bot_challenge_page.error"), wait: 4)
+          expect(logger).to have_received(:warn).with(/BotChallengePage::BotChallengePageController: Cloudflare Turnstile validation failed/)
+        end
       end
     end
   end

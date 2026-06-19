@@ -34,8 +34,7 @@ module BotChallengePage
 
     # how long is a challenge pass good for before re-challenge?
     attribute :session_passed_good_for,  default: 24.hours
-
-
+    
     # Executed inside a controller instance, to omit a request from bot challenge.
     # Adds on to :unless arg.
     attribute :skip_when, default: ->(config) { false }

@@ -13,7 +13,7 @@ RSpec.describe "altcha challenge request", type: :request do
     end
 
     context 'and solution is valid' do
-      it "sets a session key, caches the solution so it can't be reused" do
+      it "sets a session key, and caches the solution so it can't be reused" do
         post '/altcha_challenge', params: { altcha: Base64.encode64(solution) }
         expect(session[controller.bot_challenge_config.session_passed_key].keys).to include('f','t')
         cache_key = controller.cache_store.instance_variable_get(:@data).keys.first

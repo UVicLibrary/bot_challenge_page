@@ -21,7 +21,7 @@ describe "Challenge page stays around persistently", type: :system,
 
     # and eventually theys hould see the still-around message we show when there
     # was no nav after challenge success
-    expect(page).to have_text(I18n.t('bot_challenge_page.still_around'), wait: 7) # not sure why we need to wait so long to see it
+    expect(page).to have_text(I18n.t('bot_challenge_page.still_around'), wait: 4) # not sure why we need to wait so long to see it
   end
 
   describe "with redirect" do
