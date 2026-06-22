@@ -5,7 +5,7 @@ module BotChallengePage
     class_option :'rack_attack', type: :boolean, default: true, desc: "Support rate-limit allowance configuration"
     class_option :redirect_for_challenge, type: :boolean, default: false, desc: "Redirect to separate challenge page instead of inline challenge"
     class_option :altcha, type: :boolean, default: false, desc: "Use ALTCHA (altcha.org) as the challenge/widget provider"
-    class_option :altcha_copy_path, type: :string, default: "#{File.expand_path('../..', __FILE__)}/public", desc: "(Optional) The path to copy ALTCHA JS/CSS files to. By default, this is your app's public folder."
+    class_option :altcha_copy_path, type: :string, default: Rails.root.join("public"), desc: "(Optional) The path to copy ALTCHA JS/CSS files to. By default, this is your app's public folder."
 
     def generate_routes
       route 'post "/challenge", to: "bot_challenge_page/bot_challenge_page#verify_challenge", as: :bot_detect_challenge'
@@ -30,7 +30,7 @@ module BotChallengePage
         altcha_dir = path.join("altcha")
         directory("altcha", altcha_dir)
         message = "Altcha files copied to #{path.to_s}."
-        if path != "#{File.expand_path('../..', __FILE__)}/public"
+        if path != Rails.root.join("public")
           message += " Please override views/bot_challenge_page/altcha/altcha_widget.html.erb with the correct path to the correct JS/CSS"
         end
         return unless behavior == :revoke
