@@ -64,12 +64,23 @@ RSpec.describe "altcha challenge request", type: :request do
     
     context 'and solution was already used (i.e. replay attack)' do
       it 'logs a failed challenge and sends a 400 response' do
+        expect(Rails.logger).to receive(:warn)
         repeat_solution = solution
         post '/altcha_challenge', params: { altcha: Base64.encode64(repeat_solution) }
         post '/altcha_challenge', params: { altcha: Base64.encode64(repeat_solution) }
         expect(response.status).to eq 400
         expect(response).not_to be_successful
         expect(JSON.parse(response.body)['message']).to eq "Solution can't be reused"
+      end
+    end
+
+    context 'and JSON parser error' do
+      it 'logs the failed challenge and sends a 400 response' do
+        expect(Rails.logger).to receive(:warn)
+        post '/altcha_challenge', params: { altcha: Base64.encode64("") }
+        expect(response.status).to eq 400
+        expect(response).not_to be_successful
+        expect(JSON.parse(response.body)['message']).to eq "Incorrect solution"
       end
     end
   end

@@ -59,10 +59,8 @@ module BotChallengePage
                      )
                    end
           Result.new(result, replay_attack?)
-        rescue JSON::ParserError,NoMethodError => error
-          after_challenge_failure(error)
-        rescue RuntimeError => error
-          after_verify_error(error)
+        rescue JSON::ParserError,NoMethodError => _error
+         Result.new(params[:altcha], false)
         end
       end
 
@@ -70,6 +68,7 @@ module BotChallengePage
         if self.bot_challenge_config.challenge_provider == "altcha"
           logger = self.bot_challenge_config.challenge_logger || Rails.logger
           logger.warn(
+            "#{DateTime.now}  " + 
             "#{self.class.name}: #{self.bot_challenge_config.challenge_provider.capitalize} " +
               "validation failed: #{result.inspect}" +
               "Request from: #{request.remote_ip}, #{request.user_agent}"
@@ -81,19 +80,6 @@ module BotChallengePage
           # use the Cloudflare method instead if that's configured
           super
         end
-      end
-
-      # This runs after an internal server error
-      def after_verify_error(error)
-        Rails.logger.error "#{e.class} (#{e.message}):\n" + e.backtrace.join("\n")
-        # Also log it to the challenge/validation logger
-        if self.bot_challenge_config.challenge_logger
-          self.bot_challenge_config.challenge_logger.warn(
-            "#{self.class.name}: Altcha validation failed due to server error: #{error.message}. " +
-              "Request from: #{request.remote_ip}, #{request.user_agent}"
-          )
-        end
-        render json: { message: t('bot_challenge_page.error')}, status: 500, success: false
       end
       
       # https://altcha.org/docs/v2/security-recommendations/#replay-attacks
@@ -122,7 +108,11 @@ module BotChallengePage
         
         # Make some methods available as a courtesy for downstream apps
         # even if we don't use all these options ourselves
-        delegate :verified, :verified=, :expired, :invalid_signature, to: :result
+        delegate :verified=, :expired, :invalid_signature, to: :result
+        
+        def verified
+          result.respond_to?(:verified) ? result.verified : false
+        end
 
         def error_message
           if result.is_a? String # result of a JSON::ParserError
