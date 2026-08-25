@@ -16,7 +16,7 @@
         
         async function altchaCallback(solution, csrfToken) {
             try {
-                let altchaUrl = new URL("<%= altcha_bot_challenge_url %>")
+                let altchaUrl = new URL("<%= request.base_url + Rails.application.routes.url_helpers.altcha_bot_challenge_path %>")
                 altchaUrl.searchParams.append('altcha', `${solution}`)
                 const response = await fetch(String(altchaUrl), {
                     method: "POST",
